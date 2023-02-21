@@ -6,12 +6,12 @@ use Predis\Client;
 
 class SimpleRedis {
 
-
     private $host = null;
     private $port = null;    
     private $password = null;
     private $username = null;
     private $scheme = null;
+    public $debug = false;
     public static $connection = null;
 
     public function __construct(string $host = "localhost", string $port = "6379", string $password = "password", string $username = "", string $scheme = "tcp")
@@ -31,7 +31,8 @@ class SimpleRedis {
                 'host' => $this->host,
                 'port' => $this->port,
                 'username' => $this->username,
-                'password' => $this->password
+                'password' => $this->password,
+                'read_write_timeout' => 0
             ]);
         }
         return self::$connection;
@@ -40,7 +41,6 @@ class SimpleRedis {
     public function close()
     {
         if (self::$connection !== null) {
-            self::$connection->close();
             self::$connection = null;
         }
         return self::$connection;
@@ -72,6 +72,52 @@ class SimpleRedis {
     {
         if (self::$connection !== null) {
             return self::$connection->del($key);
+        }
+        return null;
+    }
+
+    public function pub(string $channel, string $message)
+    {
+        if (self::$connection !== null) {
+            return self::$connection->publish($channel, $message);
+        }
+        return null;
+    }
+
+    private $callbacks = [];
+    private $pubsub = null;
+
+    public function sub(string $channel, callable $callback)
+    {
+        if (self::$connection !== null) {
+            return [$channel => $this->callbacks[$channel] = $callback];
+        }
+        return null;
+    }
+
+    public function waitCallbacks(int $sleep = 0)
+    {
+        if (self::$connection !== null) {
+            $this->pubsub = self::$connection->pubSubLoop();
+            $this->callbacks["channel_break"] = function(){};
+            $this->pubsub->subscribe(array_keys($this->callbacks));
+            foreach ($this->pubsub as $message) {
+                if ($this->debug) {
+                    echo  "Kind: ", $message->kind, " | Channel: ", $message->channel, " | Payload: ", $message->payload, PHP_EOL;
+                }
+                if ($message->kind === "message" && in_array($message->channel, array_keys($this->callbacks))) { 
+                    $this->callbacks[$message->channel]($message->payload, $message->channel);
+                }
+                if ($message->kind === "message" && $message->channel === "channel_break" && $message->payload === "channel_break") {
+                    $this->pubsub->unsubscribe();
+                    $this->callbacks = [];
+                    break;
+                }
+                if ($sleep > 0) {
+                    usleep($sleep);
+                }
+            }
+            unset($this->pubsub);
         }
         return null;
     }

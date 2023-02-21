@@ -20,3 +20,7 @@ const DEVELOPER_INFO = [
 > composer update
 
 > php script.php
+
+> php sub.php
+
+> php pub.php
