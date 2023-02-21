@@ -11,6 +11,9 @@ class SimpleRedis {
     private $password = null;
     private $username = null;
     private $scheme = null;
+    private $callbacks = [];
+    private $pubsub = null;
+    private $list = null;
     public $debug = false;
     public static $connection = null;
 
@@ -84,9 +87,6 @@ class SimpleRedis {
         return null;
     }
 
-    private $callbacks = [];
-    private $pubsub = null;
-
     public function sub(string $channel, callable $callback)
     {
         if (self::$connection !== null) {
@@ -120,6 +120,68 @@ class SimpleRedis {
             unset($this->pubsub);
         }
         return null;
+    }
+
+    public function listPush($message, string $list = null)
+    {
+        if ($list === null) {
+            $list = $this->list ?? md5(uniqid());
+        }
+        if (self::$connection !== null) {
+            $this->list = $list;
+            return self::$connection->lpush($list, $message);
+        }
+        return null;
+    }
+
+    public function listPop(string $list = null)
+    {
+        if ($list === null) {
+            $list = $this->list;
+        }
+        if (self::$connection !== null && $list !== null) {
+            $this->list = $list;
+            return self::$connection->lpop($list);
+        }
+    }
+
+    public function listSize(string $list = null)
+    {
+        if ($list === null) {
+            $list = $this->list;
+        }
+        if (self::$connection !== null && $list !== null) {
+            $this->list = $list;
+            return self::$connection->llen($list);
+        }
+        return -1;
+    }
+
+    public function listIndex(int $index, string $list = null)
+    {
+        if ($list === null) {
+            $list = $this->list;
+        }
+        if (self::$connection !== null && $list !== null) {
+            $this->list = $list;
+            return self::$connection->lindex($list, $index);
+        }
+        return null;
+    }
+
+    public function listAll(string $list = null, bool $reverse = true)
+    {
+        if ($list === null) {
+            $list = $this->list;
+        }
+        if (self::$connection !== null && $list !== null) {
+            $this->list = $list;
+            $array = self::$connection->lrange($list, 0, -1) ?? [];
+            if ($reverse) {
+                $array = array_reverse($array);
+            }
+            return $array;
+        }
     }
 
 }
