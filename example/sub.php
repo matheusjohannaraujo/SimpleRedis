@@ -5,6 +5,7 @@ require_once "vendor/autoload.php";
 use Lib\SimpleRedis;
 
 $sr = new SimpleRedis;
+$sr->config();
 $sr->open();
 
 $sr->sub("channel", function($message, $channel) {

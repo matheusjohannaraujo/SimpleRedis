@@ -6,42 +6,44 @@ use Predis\Client;
 
 class SimpleRedis {
 
-    private $host = null;
-    private $port = null;    
-    private $password = null;
-    private $username = null;
-    private $scheme = null;
+    private static $host = null;
+    private static $port = null;    
+    private static $password = null;
+    private static $username = null;
+    private static $scheme = null;
+    private static $read_write_timeout = null;
+    public static $connection = null;
+    public $debug = false;
     private $callbacks = [];
     private $pubsub = null;
     private $list = null;
-    public $debug = false;
-    public static $connection = null;
 
-    public function __construct(string $host = "localhost", string $port = "6379", string $password = "password", string $username = "", string $scheme = "tcp")
+    public static function config(string $host = "localhost", string $port = "6379", string $password = "password", string $username = "", string $scheme = "tcp", int $read_write_timeout = 0)
     {
-        $this->host = $host;
-        $this->port = $port;
-        $this->password = $password;
-        $this->username = $username;
-        $this->scheme = $scheme;
+        self::$host = $host;
+        self::$port = $port;
+        self::$password = $password;
+        self::$username = $username;
+        self::$scheme = $scheme;
+        self::$read_write_timeout = $read_write_timeout;
     }
 
-    public function open()
+    public static function open()
     {
         if (self::$connection === null) {
             self::$connection = new Client([
-                'scheme' => $this->scheme,
-                'host' => $this->host,
-                'port' => $this->port,
-                'username' => $this->username,
-                'password' => $this->password,
-                'read_write_timeout' => 0
+                'scheme' => self::$scheme,
+                'host' => self::$host,
+                'port' => self::$port,
+                'username' => self::$username,
+                'password' => self::$password,
+                'read_write_timeout' => self::$read_write_timeout
             ]);
         }
         return self::$connection;
     }
 
-    public function close()
+    public static function close()
     {
         if (self::$connection !== null) {
             self::$connection = null;

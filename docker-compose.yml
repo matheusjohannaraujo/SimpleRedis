@@ -14,7 +14,7 @@ services:
 #      - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_PORT_NUMBER=6379
       - REDIS_PASSWORD=password
-#      - REDIS_USERNAME=root
+#      - REDIS_USERNAME=user
 #      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG
 #      - REDIS_IO_THREADS=4
 #      - REDIS_IO_THREADS_DO_READS=true
@@ -31,7 +31,9 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=password
-#      - REDIS_USERNAME=root
+#      - REDIS_USERNAME=user
+      - HTTP_USER=user
+      - HTTP_PASSWORD=password
     depends_on:
       - redis
 

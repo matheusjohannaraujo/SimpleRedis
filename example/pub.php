@@ -5,6 +5,7 @@ require_once "vendor/autoload.php";
 use Lib\SimpleRedis;
 
 $sr = new SimpleRedis;
+$sr->config();
 $sr->open();
 
 for ($i = 1; $i <= 10; $i++) { 
